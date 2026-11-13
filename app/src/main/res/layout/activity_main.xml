@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg"
+    android:orientation="horizontal">
+
+    <!-- Thanh bên kiểu SmartTube -->
+    <LinearLayout
+        android:id="@+id/side"
+        android:layout_width="190dp"
+        android:layout_height="match_parent"
+        android:background="@color/side"
+        android:orientation="vertical"
+        android:paddingLeft="12dp"
+        android:paddingRight="12dp"
+        android:paddingTop="24dp"
+        android:paddingBottom="16dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="8dp"
+            android:layout_marginBottom="28dp"
+            android:text="TubeLite"
+            android:textColor="@color/red"
+            android:textSize="24sp"
+            android:textStyle="bold" />
+
+        <TextView android:id="@+id/navSearch" style="@style/SideItem"
+            android:drawableLeft="@drawable/ic_search" android:text="Tìm kiếm" />
+        <TextView android:id="@+id/navTrending" style="@style/SideItem"
+            android:drawableLeft="@drawable/ic_trending" android:text="Thịnh hành" />
+        <TextView android:id="@+id/navHistory" style="@style/SideItem"
+            android:drawableLeft="@drawable/ic_history" android:text="Lịch sử" />
+
+        <View android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" />
+
+        <TextView
+            android:id="@+id/navUpdate"
+            style="@style/SideItem"
+            android:drawableLeft="@drawable/ic_update"
+            android:textSize="12sp"
+            android:textColor="@color/text2" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:paddingLeft="24dp"
+        android:paddingRight="24dp"
+        android:paddingTop="20dp">
+
+        <!-- Ô tìm kiếm -->
+        <LinearLayout
+            android:id="@+id/searchBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <EditText
+                android:id="@+id/searchInput"
+                android:layout_width="0dp"
+                android:layout_height="44dp"
+                android:layout_weight="1"
+                android:background="@drawable/edit_bg"
+                android:hint="Nhập tên video rồi bấm OK…"
+                android:imeOptions="actionSearch|flagNoExtractUi"
+                android:inputType="text"
+                android:maxLines="1"
+                android:paddingLeft="14dp"
+                android:paddingRight="14dp"
+                android:textColor="@color/text"
+                android:textColorHint="#88FFFFFF"
+                android:textSize="16sp" />
+
+            <ImageView
+                android:id="@+id/btnMic"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:layout_marginLeft="8dp"
+                android:background="@drawable/ctrl_btn"
+                android:focusable="true"
+                android:padding="10dp"
+                android:src="@drawable/ic_mic" />
+
+            <ImageView
+                android:id="@+id/btnGo"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:layout_marginLeft="4dp"
+                android:background="@drawable/ctrl_btn"
+                android:focusable="true"
+                android:padding="10dp"
+                android:src="@drawable/ic_search" />
+        </LinearLayout>
+
+        <!-- Hàng chọn mục Thịnh hành -->
+        <HorizontalScrollView
+            android:id="@+id/chipScroll"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scrollbars="none"
+            android:visibility="gone">
+            <LinearLayout
+                android:id="@+id/chips"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp" />
+        </HorizontalScrollView>
+
+        <TextView
+            android:id="@+id/pageTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="8dp"
+            android:textColor="@color/text"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+            <GridView
+                android:id="@+id/grid"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clipToPadding="false"
+                android:drawSelectorOnTop="true"
+                android:horizontalSpacing="12dp"
+                android:listSelector="@drawable/grid_selector"
+                android:nextFocusLeft="@+id/navSearch"
+                android:numColumns="4"
+                android:paddingBottom="24dp"
+                android:scrollbars="none"
+                android:stretchMode="columnWidth"
+                android:verticalSpacing="14dp" />
+
+            <TextView
+                android:id="@+id/status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:padding="24dp"
+                android:textColor="@color/text2"
+                android:textSize="16sp"
+                android:visibility="gone" />
+        </FrameLayout>
+    </LinearLayout>
+</LinearLayout>

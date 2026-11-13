@@ -1,0 +1,12 @@
+.gradle/
+build/
+app/build/
+local.properties
+.idea/
+*.iml
+captures/
+.DS_Store
+YoutubeHttpDataSource.bak
+extractor.txt
+TubeLite.apk
+.kotlin/
