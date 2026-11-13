@@ -27,7 +27,8 @@ object Kids {
         val videos: List<Fmt>,
         val audios: List<Fmt>
     ) {
-        fun heights(): List<Int> = (videos + muxed).map { it.height }.filter { it in 1..720 }.distinct().sortedDescending()
+        fun heights(): List<Int> = (videos.filter { ok(it) } + muxed).map { it.height }
+            .filter { it in 1..Device.maxHeight }.distinct().sortedDescending()
         fun item() = VItem("https://www.youtube.com/watch?v=$id", title, author, Yt.thumbFor("https://www.youtube.com/watch?v=$id", null), duration)
     }
 
@@ -74,7 +75,9 @@ object Kids {
                 val details = resp.optJSONObject("videoDetails") ?: JSONObject()
                 val muxed = parse(id, sd.optJSONArray("formats"))
                 val adaptive = parse(id, sd.optJSONArray("adaptiveFormats"))
-                val videos = adaptive.filter { it.mime.startsWith("video/mp4") && it.mime.contains("avc1") }
+                val videos = adaptive.filter {
+                    (it.mime.startsWith("video/mp4") && it.mime.contains("avc1")) || (it.mime.startsWith("video/webm") && it.mime.contains("vp9"))
+                }
                 val audios = adaptive.filter { it.mime.startsWith("audio/mp4") }
                 if (muxed.isEmpty() && (videos.isEmpty() || audios.isEmpty())) throw IllegalStateException("Không có luồng phát")
                 return Video(id, details.optString("title"), details.optString("author"),
@@ -109,14 +112,18 @@ object Kids {
 
     class Built(val source: MediaSource, val height: Int)
 
+    fun ok(f: Fmt) = Device.codecOk(f.mime.contains("vp9"), f.mime.contains("avc1"), f.height, f.fps)
+
     private val rangeDs by lazy { YoutubeHttpDataSource.Factory().setRangeParameterEnabled(true).setRnParameterEnabled(true) }
     private val plainDs by lazy { YoutubeHttpDataSource.Factory().setRangeParameterEnabled(false).setRnParameterEnabled(true) }
 
     fun build(v: Video, maxH: Int, muxedOnly: Boolean): Built {
         if (!muxedOnly && v.videos.isNotEmpty() && v.audios.isNotEmpty()) {
-            val ok = v.videos.filter { it.height in 1..maxH }
-            val video = ok.sortedWith(compareByDescending<Fmt> { it.height }.thenBy { if (it.fps in 1..30) 0 else 1 }).firstOrNull()
-                ?: v.videos.minByOrNull { it.height }!!
+            val good = v.videos.filter { it.height in 1..maxH && ok(it) }
+            val video = good.sortedWith(compareByDescending<Fmt> { it.height }
+                .thenBy { if (it.mime.contains("avc1")) 0 else 1 }
+                .thenBy { if (it.fps in 1..30) 0 else 1 }).firstOrNull()
+                ?: v.videos.filter { it.mime.contains("avc1") }.minByOrNull { it.height } ?: v.videos.minByOrNull { it.height }!!
             val audio = v.audios.filter { it.bitrate in 1..170_000 }.maxByOrNull { it.bitrate } ?: v.audios.minByOrNull { it.bitrate }!!
             val f = ProgressiveMediaSource.Factory(rangeDs)
             val src = MergingMediaSource(true,

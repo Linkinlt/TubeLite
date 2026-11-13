@@ -20,7 +20,7 @@ import org.schabi.newpipe.extractor.stream.StreamInfo
 import org.schabi.newpipe.extractor.stream.VideoStream
 import java.io.ByteArrayInputStream
 
-/** Chọn luồng video (tối đa 720p, ưu tiên H.264 ≤30fps cho máy yếu) + âm thanh */
+/** Chọn luồng video theo khả năng máy (xem Device), ưu tiên H.264 + âm thanh */
 object Media {
     class Built(val source: MediaSource, val height: Int, val adaptive: Boolean)
 
@@ -42,9 +42,16 @@ object Media {
     private fun playable(s: Stream) = s.deliveryMethod == DeliveryMethod.PROGRESSIVE_HTTP ||
         s.deliveryMethod == DeliveryMethod.DASH || s.deliveryMethod == DeliveryMethod.HLS
 
+    private fun isAvc(v: VideoStream) = v.format == MediaFormat.MPEG_4 || (v.codec ?: "").startsWith("avc")
+    private fun isVp9(v: VideoStream) = (v.codec ?: "").startsWith("vp9") || (v.codec ?: "").startsWith("vp09") ||
+        (v.format == MediaFormat.WEBM && !(v.codec ?: "").startsWith("av01"))
+
+    /** Luồng máy giải mã được. */
+    private fun allowed(v: VideoStream) = Device.codecOk(isVp9(v), isAvc(v), height(v), v.fps)
+
     fun heights(info: StreamInfo): List<Int> =
-        (info.videoOnlyStreams + info.videoStreams).filter(::playable).map(::height)
-            .filter { it in 1..720 }.distinct().sortedDescending()
+        (info.videoOnlyStreams.filter(::playable).filter(::allowed) + info.videoStreams.filter(::playable))
+            .map(::height).filter { it in 1..Device.maxHeight }.distinct().sortedDescending()
 
     fun build(info: StreamInfo, maxH: Int, muxedOnly: Boolean): Built {
         if (!muxedOnly) {
@@ -65,12 +72,11 @@ object Media {
     }
 
     private fun pickVideo(list: List<VideoStream>, maxH: Int): VideoStream? {
-        val ok = list.filter { height(it) in 1..maxH }
-        if (ok.isEmpty()) return list.minByOrNull(::height)
-        val avc = ok.filter { it.format == MediaFormat.MPEG_4 || (it.codec ?: "").startsWith("avc") }
-        val pool = avc.ifEmpty { ok }
-        return pool.sortedWith(
+        val ok = list.filter { height(it) in 1..maxH && allowed(it) }
+        if (ok.isEmpty()) return list.filter(::isAvc).minByOrNull(::height) ?: list.minByOrNull(::height)
+        return ok.sortedWith(
             compareByDescending<VideoStream> { height(it) }
+                .thenBy { if (isAvc(it)) 0 else 1 }                       // cùng độ phân giải: ưu tiên H.264 (nhẹ hơn)
                 .thenBy { if (it.fps in 1..30) 0 else 1 }
         ).first()
     }

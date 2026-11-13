@@ -49,13 +49,13 @@ class PlayerActivity : Activity() {
     private val back = ArrayList<String>()   // video đã xem trước đó (nút Trước)
     private var curUrl = ""
     private var token = 0
-    private var curHeight = 720
+    private var curHeight = 0
     private var triedMuxed = false
     private var speed = 1f
     private var userSeeking = false
 
     private val prefs by lazy { getSharedPreferences("settings", MODE_PRIVATE) }
-    private val maxQuality get() = prefs.getInt("quality", 720)
+    private val maxQuality get() = prefs.getInt("quality", Device.defaultQuality).coerceAtMost(Device.maxHeight)
 
     private val hideRunnable = Runnable { hideOverlay() }
     private val tick = object : Runnable {
@@ -89,11 +89,11 @@ class PlayerActivity : Activity() {
         // Bộ đệm nhỏ cho máy RAM 1GB
         val load = DefaultLoadControl.Builder()
             .setBufferDurationsMs(10_000, 25_000, 1_500, 3_000)
-            .setTargetBufferBytes(8 * 1024 * 1024)
+            .setTargetBufferBytes(Device.bufferBytes)
             .setPrioritizeTimeOverSizeThresholds(false)
             .build()
         val selector = DefaultTrackSelector(this).apply {
-            setParameters(buildUponParameters().setMaxVideoSize(1280, 720))
+            setParameters(buildUponParameters().setMaxVideoSize(Device.maxWidth(Device.maxHeight), Device.maxHeight))
         }
         player = ExoPlayer.Builder(this, DefaultRenderersFactory(this).setEnableDecoderFallback(true))
             .setTrackSelector(selector)
@@ -336,7 +336,7 @@ class PlayerActivity : Activity() {
         kids?.let { v ->
             val hs = v.heights().ifEmpty { listOf(360) }
             val labels = hs.map { if (it == curHeight) "✓  ${it}p" else "    ${it}p" }.toTypedArray()
-            AlertDialog.Builder(this).setTitle("Chất lượng (tối đa 720p)")
+            AlertDialog.Builder(this).setTitle("Chất lượng (máy này tối đa ${Device.maxHeight}p)")
                 .setItems(labels) { _, w ->
                     prefs.edit().putInt("quality", hs[w]).apply()
                     triedMuxed = false
@@ -346,9 +346,9 @@ class PlayerActivity : Activity() {
             return
         }
         val i = info ?: return
-        val hs = Media.heights(i).ifEmpty { listOf(720, 480, 360) }
+        val hs = Media.heights(i).ifEmpty { listOf(360) }
         val labels = hs.map { if (it == curHeight) "✓  ${it}p" else "    ${it}p" }.toTypedArray()
-        AlertDialog.Builder(this).setTitle("Chất lượng (tối đa 720p)")
+        AlertDialog.Builder(this).setTitle("Chất lượng (máy này tối đa ${Device.maxHeight}p)")
             .setItems(labels) { _, w ->
                 prefs.edit().putInt("quality", hs[w]).apply()
                 triedMuxed = false
